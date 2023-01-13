@@ -100,7 +100,7 @@ if ( ! class_exists( 'Kava_Extra_CX_Loader' ) ) {
 
 		/**
 		 * Include latest versions of modules in current loader instance.
-		 * All available version preiously stored by 'store_versions' methods of each loader instance.
+		 * All available version previously stored by 'store_versions' methods of each loader instance.
 		 *
 		 * @return boolean
 		 */
@@ -120,11 +120,22 @@ if ( ! class_exists( 'Kava_Extra_CX_Loader' ) ) {
 
 					$dir = pathinfo( $path, PATHINFO_DIRNAME );
 
-					$url = str_replace(
-						'\\',
-						'/',
-						str_replace( untrailingslashit( ABSPATH ), esc_url( home_url() ), $dir )
-					);
+					$normalize_dir = wp_normalize_path( $dir );
+					$plugin_dir    = wp_normalize_path( WP_PLUGIN_DIR );
+
+					if ( 0 === strpos( $normalize_dir, $plugin_dir ) ) {
+						$url = str_replace(
+							'\\',
+							'/',
+							str_replace( $plugin_dir, plugins_url(), $normalize_dir )
+						);
+					} else {
+						$url = str_replace(
+							'\\',
+							'/',
+							str_replace( wp_normalize_path( WP_CONTENT_DIR ), content_url(), $normalize_dir )
+						);
+					}
 
 					$this->included_modules[ $slug ] = array(
 						'path' => trailingslashit( $dir ),
@@ -142,10 +153,10 @@ if ( ! class_exists( 'Kava_Extra_CX_Loader' ) ) {
 		}
 
 		/**
-		 * Retireve path and URL of included module directory
+		 * Retrieve path and URL of included module directory
 		 *
-		 * @param  [type] $file [description]
-		 * @return [type]       [description]
+		 * @param  string $file Module file.
+		 * @return bool|array
 		 */
 		public function get_included_module_data( $file ) {
 
@@ -156,12 +167,12 @@ if ( ! class_exists( 'Kava_Extra_CX_Loader' ) ) {
 		/**
 		 * Select latest version path from all available.
 		 *
-		 * @param  array  $module_versions All available vaerions paths for selected module
+		 * @param  array  $module_versions All available versions paths for selected module
 		 * @return string Module path.
 		 */
 		private function get_latest_version_path( array $module_versions = array() ) {
 
-			// Immediately return path if array contain sinle element.
+			// Immediately return path if array contain single element.
 			if ( 1 === count( $module_versions ) ) {
 				$module_versions = array_values( $module_versions );
 				return $module_versions[0];

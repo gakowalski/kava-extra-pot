@@ -29,10 +29,11 @@ if ( ! class_exists( 'CX_Control_Radio' ) ) {
 		 * @var array
 		 */
 		public $defaults_settings = array(
-			'id'      => 'cx-ui-radio-id',
-			'name'    => 'cx-ui-radio-name',
-			'value'   => 'radio-2',
-			'options' => array(
+			'id'       => 'cx-ui-radio-id',
+			'name'     => 'cx-ui-radio-name',
+			'value'    => 'radio-2',
+			'required' => false,
+			'options'  => array(
 				'radio-1' => array(
 					'label'   => 'Radio 1',
 					'img_src' => '',
@@ -46,6 +47,8 @@ if ( ! class_exists( 'CX_Control_Radio' ) ) {
 					'img_src' => '',
 				),
 			),
+			'allow_custom_value' => false,
+			'layout' => 'vertical', // `vertical` or `horizontal`
 			'label'  => '',
 			'class'  => '',
 		);
@@ -57,8 +60,9 @@ if ( ! class_exists( 'CX_Control_Radio' ) ) {
 		 */
 		public function render() {
 
-			$html  = '';
-			$class = implode( ' ',
+			$html   = '';
+			$layout = ! empty( $this->settings['layout'] ) ? $this->settings['layout'] : 'vertical';
+			$class  = implode( ' ',
 				array(
 					$this->settings['class'],
 				)
@@ -71,9 +75,9 @@ if ( ! class_exists( 'CX_Control_Radio' ) ) {
 			$html .= '<div class="cx-ui-container ' . esc_attr( $class ) . '" >';
 				if ( $this->settings['options'] && ! empty( $this->settings['options'] ) && is_array( $this->settings['options'] ) ) {
 					if ( '' !== $this->settings['label'] ) {
-						$html .= '<label class="cx-label" for="' . esc_attr( $this->settings['id'] ) . '">' . $this->settings['label'] . '</label> ';
+						$html .= '<label class="cx-label" for="' . esc_attr( $this->settings['id'] ) . '">' . wp_kses_post( $this->settings['label'] ) . '</label> ';
 					}
-					$html .= '<div class="cx-radio-group">';
+					$html .= '<div class="cx-radio-group cx-check-radio-group--' . esc_attr( $layout ) . '">';
 						foreach ( $this->settings['options'] as $option => $option_value ) {
 
 							$checked    = $option == $this->settings['value'] ? ' checked' : '';
@@ -87,6 +91,20 @@ if ( ! class_exists( 'CX_Control_Radio' ) ) {
 							$html .= '<label for="' . esc_attr( $radio_id ) . '"><span class="cx-lable-content">' . $label_content . '</span></label> ';
 							$html .= '</div>';
 						}
+
+						if ( $this->settings['allow_custom_value'] ) {
+
+							$custom_value = ! in_array( $this->settings['value'], array_keys( $this->settings['options'] ) ) ? $this->settings['value'] : '';
+							$checked      = ( $custom_value === $this->settings['value'] && '' !== $custom_value ) ? ' checked' : '';
+
+							$html .= '<div class="cx-radio-item">';
+								$html .= '<label>';
+									$html .= '<input type="radio" class="cx-radio-input" name="' . esc_attr( $this->settings['name'] ) . '"' . $checked . ' value="' . esc_attr( $custom_value ) . '"/>';
+									$html .= '<span class="cx-radio-item"><i></i></span><input type="text" class="cx-radio-custom-value cx-ui-text" value="' . esc_attr( $custom_value ) . '">';
+								$html .= '</label>';
+							$html .= '</div>';
+						}
+
 						$html .= '<div class="clear"></div>';
 					$html .= '</div>';
 				}

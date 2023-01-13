@@ -3,17 +3,31 @@
 	display: flex;
 	flex-wrap: wrap;
 
-	.cx-slider-input{
+	&.cx-slider-wrap__labels-range {
+		.cx-slider-input {
+			.cx-ui-stepper {
+				display: none;
+			}
+		}
+	}
+
+	.cx-slider-input {
 		flex: 0 1 10%;
 		min-width: 100px;
 		max-width: 200px;
+		display: flex;
+		justify-content: flex-start;
+		align-items: center;
 	}
 
 	.cx-slider-holder{
 		flex: 0 1 90%;
 		min-width: 200px;
 		max-width: 300px;
-		margin-right: 10px;
+		margin: 0 10px 0 0;
+		.rtl & {
+			margin: 0 0 0 10px;
+		}
 			input[type=range] {
 				-webkit-appearance: none;
 				width: 100%;

@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: Kava Extra
+ * Plugin Name: Kava Extra POT
  * Plugin URI:  https://zemez.io/
- * Description: Kava Theme extra plugin
- * Version:     1.0.5
- * Author:      Zemez
- * Author URI:  https://zemez.io/
+ * Description: Kava Theme extra plugin with updated interface builder
+ * Version:     1.1.0
+ * Author:      <a href="https://zemez.io/">Zemez</a>, <a href="mailto:grzegorz.adam.kowalski@gmail.com">Grzegorz Kowalski</a>
+ * Author URI:  
  * Text Domain: kava-extra
  * License:     GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt

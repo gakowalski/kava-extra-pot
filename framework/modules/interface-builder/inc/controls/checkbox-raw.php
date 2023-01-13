@@ -8,12 +8,12 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-if ( ! class_exists( 'CX_Control_Checkbox' ) ) {
+if ( ! class_exists( 'CX_Control_Checkbox_Raw' ) ) {
 
 	/**
 	 * Class for the building CX_Control_Checkbox elements.
 	 */
-	class CX_Control_Checkbox extends CX_Controls_Base {
+	class CX_Control_Checkbox_Raw extends CX_Controls_Base {
 
 		/**
 		 * Default settings.
@@ -26,9 +26,9 @@ if ( ! class_exists( 'CX_Control_Checkbox' ) ) {
 			'name'     => 'cx-checkbox-name',
 			'required' => false,
 			'value'    => array(
-				'checkbox-1' => 'true',
-				'checkbox-2' => 'true',
-				'checkbox-3' => 'true',
+				'checkbox-1',
+				'checkbox-2',
+				'checkbox-3',
 			),
 			'options' => array(
 				'checkbox-1' => 'checkbox 1',
@@ -37,10 +37,11 @@ if ( ! class_exists( 'CX_Control_Checkbox' ) ) {
 			),
 			'allow_custom_value' => false,
 			'add_button_label'   => 'Add custom value',
-			'layout' => 'vertical', // `vertical` or `horizontal`
 			'label'  => '',
 			'class'  => '',
 		);
+
+		public static $index = 0;
 
 		/**
 		 * Render html UI_Checkbox.
@@ -49,21 +50,23 @@ if ( ! class_exists( 'CX_Control_Checkbox' ) ) {
 		 */
 		public function render() {
 
-			$html   = '';
-			$layout = ! empty( $this->settings['layout'] ) ? $this->settings['layout'] : 'vertical';
-			$class  = implode( ' ',
+			$html  = '';
+
+			$class = implode( ' ',
 				array(
 					$this->settings['class'],
 				)
 			);
 
-			$html .= '<div class="cx-ui-control-container ' . esc_attr( $class ) . '">';
-
-			$counter = 0;
-
 			if ( isset( $this->settings['options_callback'] ) ) {
 				$this->settings['options'] = call_user_func( $this->settings['options_callback'] );
 			}
+
+			$data_options = htmlspecialchars( json_encode( array_keys( $this->settings['options'] ) ) );
+			$allow_custom = $this->settings['allow_custom_value'];
+			$allow_custom = filter_var( $allow_custom, FILTER_VALIDATE_BOOLEAN );
+
+			$html .= '<div class="cx-ui-control-container ' . esc_attr( $class ) . '" data-options="' . $data_options . '" data-allow-custom="' . $allow_custom . '" data-index="' . self::$index . '">';
 
 			if ( ! empty( $this->settings['options'] ) && is_array( $this->settings['options'] ) ) {
 
@@ -74,8 +77,6 @@ if ( ! class_exists( 'CX_Control_Checkbox' ) ) {
 				if ( '' !== $this->settings['label'] ) {
 					$html .= '<label class="cx-label" for="' . esc_attr( $this->settings['id'] ) . '">' . wp_kses_post( $this->settings['label'] ) . '</label> ';
 				}
-
-				$html .= '<div class="cx-checkbox-group cx-check-radio-group--' . esc_attr( $layout ) . '">';
 
 				foreach ( $this->settings['options'] as $option => $option_value ) {
 
@@ -90,52 +91,68 @@ if ( ! class_exists( 'CX_Control_Checkbox' ) ) {
 					$checked      = ( ! $this->is_empty( $option_checked ) && filter_var( $item_value, FILTER_VALIDATE_BOOLEAN ) ) ? 'checked' : '';
 					$item_value   = filter_var( $item_value, FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
 					$option_label = isset( $option_value ) && is_array( $option_value ) ? $option_value['label'] : $option_value;
+					$index        = $option;
 
-					$html .= '<div class="cx-checkbox-item-wrap">';
-						$html .= '<span class="cx-label-content">';
-						$html .= '<input type="hidden" id="' . esc_attr( $this->settings['id'] ) . '-' . $counter . '" class="cx-checkbox-input" name="' . esc_attr( $this->settings['name'] ) . '[' . $option . ']" ' . $checked . ' value="' . $item_value . '" ' . $this->get_required() . '>';
-						$html .= '<span class="cx-checkbox-item"><span class="marker dashicons dashicons-yes"></span></span>';
-						$html .= '<label class="cx-checkbox-label" for="' . esc_attr( $this->settings['id'] ) . '-' . $counter . '"><span class="cx-label-content">' . esc_html( $option_label ) . '</span></label> ';
-						$html .= '</span>';
+					$html .= '<div class="cx-checkbox-item">';
+						$html .= '<label class="cx-checkbox-label">';
+
+							$html .= sprintf(
+								'<input type="checkbox" class="cx-checkbox-input" name="%1$s[]" %2$s value="%3$s" %4$s>',
+								esc_attr( $this->settings['name'] ),
+								$checked,
+								$option,
+								$this->get_required()
+							);
+
+							$html .= '<span class="cx-label-content">' . esc_html( $option_label ) . '</span>';
+						$html .= '</label>';
 					$html .= '</div>';
 
-					$counter++;
 				}
 
 				if ( $this->settings['allow_custom_value'] ) {
 
 					if ( ! empty( $this->settings['value'] ) ) {
-						$custom_options = array_diff( array_keys( $this->settings['value'] ), array_keys( $this->settings['options'] ) );
+
+						$custom_options = array_diff( array_values( $this->settings['value'] ), array_keys( $this->settings['options'] ) );
 
 						if ( ! empty( $custom_options ) ) {
+
 							foreach ( $custom_options as $custom_option ) {
-								$custom_item_value = filter_var( $this->settings['value'][ $custom_option ], FILTER_VALIDATE_BOOLEAN );
 
-								if ( ! $custom_item_value ) {
-									continue;
-								}
-
-								$html .= '<div class="cx-checkbox-item-wrap">';
-									$html .= '<span class="cx-label-content">';
-										$html .= '<input type="hidden" class="cx-checkbox-input" name="' . esc_attr( $this->settings['name'] ) . '[' . $custom_option . ']" checked value="true">';
-										$html .= '<span class="cx-checkbox-item"><span class="marker dashicons dashicons-yes"></span></span>';
-										$html .= '<label class="cx-checkbox-label"><input type="text" class="cx-checkbox-custom-value cx-ui-text" value="' . esc_attr( $custom_option ) . '"></label>';
-									$html .= '</span>';
+								$html .= '<div class="cx-checkbox-item" style="padding: 0 0 4px;">';
+									$html .= '<label class="cx-checkbox-label">';
+										$html .= sprintf(
+											'<input type="checkbox" class="cx-checkbox-input" name="%1$s[]" checked value="%2$s">',
+											esc_attr( $this->settings['name'] ),
+											$custom_option
+										);
+										$html .= '<input type="text" class="cx-checkbox-custom-value cx-ui-text" value="' . esc_attr( $custom_option ) . '">';
+									$html .= '</label>';
 								$html .= '</div>';
 							}
+
 						}
 					}
 
 					$html .= sprintf(
-						'<a href="#" class="cx-checkbox-add-button">%1$s</a>',
-						esc_html( $this->settings['add_button_label'] )
+						'<a href="#" class="cx-checkbox-add-button" data-index="%2$s">%1$s</a>',
+						esc_html( $this->settings['add_button_label'] ),
+						self::$index
 					);
-				}
 
-				$html .= '</div>';
+					$html .= sprintf(
+						'<template id="cx_checkbox_custom_template_%1$d"><div class="cx-checkbox-item" style="padding: 0 0 4px;"><label class="cx-checkbox-label"><input type="checkbox" class="cx-checkbox-input" name="%2$s[]" checked value=""><input type="text" class="cx-checkbox-custom-value cx-ui-text" value=""></label></div></template>',
+						self::$index,
+						esc_attr( $this->settings['name'] )
+					);
+
+				}
 			}
 
 			$html .= '</div>';
+
+			self::$index++;
 
 			return $html;
 		}

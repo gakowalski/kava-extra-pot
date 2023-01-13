@@ -2,7 +2,7 @@
 /**
  * Interface Builder module
  *
- * Version: 1.0.1
+ * Version: 1.9.0
  */
 
 // If this file is called directly, abort.
@@ -42,20 +42,20 @@ if ( ! class_exists( 'CX_Interface_Builder' ) ) {
 		 *
 		 * @var string
 		 */
-		protected $version = '1.0.1';
+		protected $version = '1.9.0';
 
 		/**
 		 * Conditions
 		 *
 		 * @var array
 		 */
-		public $conditions = array();
+		public static $conditions = array();
 
 		/**
 		 * [$conditions description]
 		 * @var array
 		 */
-		public $fields_value = array();
+		public static $fields_value = array();
 
 		/**
 		 * Module settings.
@@ -126,7 +126,7 @@ if ( ! class_exists( 'CX_Interface_Builder' ) ) {
 		 * Dependencies array
 		 * @var array
 		 */
-		private $deps = array(
+		private static $deps = array(
 			'css' => array(),
 			'js'  => array( 'jquery' ),
 		);
@@ -153,7 +153,6 @@ if ( ! class_exists( 'CX_Interface_Builder' ) ) {
 			require trailingslashit( $this->path ) . 'inc/class-cx-controls-manager.php';
 
 			$this->controls = new CX_Controls_Manager( $this->path, $this->url );
-
 		}
 
 		/**
@@ -248,7 +247,7 @@ if ( ! class_exists( 'CX_Interface_Builder' ) ) {
 						$args['name'] = $args['id'];
 					}
 
-					if ( 'control' ===  $type ) {
+					if ( 'control' ===  $type && $this->controls) {
 						$instance         = $this->controls->register_control( $args['type'], $args );
 						$args['instance'] = $instance;
 
@@ -257,11 +256,11 @@ if ( ! class_exists( 'CX_Interface_Builder' ) ) {
 					}
 
 					if ( array_key_exists( 'conditions', $args ) ) {
-						$this->conditions[ $args['id'] ] = $args['conditions'];
+						self::$conditions[ $args['id'] ] = $args['conditions'];
 					}
 
 					if ( array_key_exists( 'value', $args ) ) {
-						$this->fields_value[ $args['id'] ] = $args['value'];
+						self::$fields_value[ $args['id'] ] = $args['value'];
 					}
 
 					$this->structure[ $args['id'] ] = $args;
@@ -288,11 +287,11 @@ if ( ! class_exists( 'CX_Interface_Builder' ) ) {
 					}
 
 					if ( array_key_exists( 'conditions', $value ) ) {
-						$this->conditions[ $key ] = $value['conditions'];
+						self::$conditions[ $key ] = $value['conditions'];
 					}
 
 					if ( array_key_exists( 'value', $value ) ) {
-						$this->fields_value[ $key ] = $value['value'];
+						self::$fields_value[ $key ] = $value['value'];
 					}
 
 					$this->structure[ $key ] = $value;
@@ -311,8 +310,24 @@ if ( ! class_exists( 'CX_Interface_Builder' ) ) {
 				return;
 			}
 
-			$this->deps['js']  = array_merge( $this->deps['js'], $control->get_script_depends() );
-			$this->deps['css'] = array_merge( $this->deps['css'], $control->get_style_depends() );
+			self::$deps['js']  = array_merge( self::$deps['js'], $control->get_script_depends() );
+			self::$deps['css'] = array_merge( self::$deps['css'], $control->get_style_depends() );
+
+			$constrol_settings = $control->get_settings();
+
+			if ( 'repeater' === $constrol_settings['type'] && ! empty( $constrol_settings['fields'] ) ) {
+				foreach ( $constrol_settings['fields'] as $field ) {
+					$child_instance = $this->controls->register_control( $field['type'], $field );
+
+					if ( $child_instance ) {
+
+						self::$deps['js']  = array_merge( self::$deps['js'], $child_instance->get_script_depends() );
+						self::$deps['css'] = array_merge( self::$deps['css'], $child_instance->get_style_depends() );
+
+					}
+
+				}
+			}
 
 		}
 
@@ -406,7 +421,8 @@ if ( ! class_exists( 'CX_Interface_Builder' ) ) {
 			$sorted_structure = $this->sort_structure( $args );
 
 			$output = $this->build( $sorted_structure );
-			$output = str_replace( array( "\r\n", "\r", "\n", "\t" ), '', $output );
+			//$output = str_replace( array( "\r\n", "\r", "\n", "\t" ), '', $output );
+			$output = str_replace( array( "\t" ), '', $output );
 
 			$this->reset_structure();
 
@@ -542,8 +558,8 @@ if ( ! class_exists( 'CX_Interface_Builder' ) ) {
 				$suffix = '.min';
 			}
 
-			$js_deps  = array_unique( $this->deps['js'] );
-			$css_deps = array_unique( $this->deps['css'] );
+			$js_deps  = array_unique( self::$deps['js'] );
+			$css_deps = array_unique( self::$deps['css'] );
 
 			wp_enqueue_script(
 				'cx-interface-builder',
@@ -555,8 +571,14 @@ if ( ! class_exists( 'CX_Interface_Builder' ) ) {
 
 			wp_localize_script( 'cx-interface-builder', 'cxInterfaceBuilder',
 				array(
-					'conditions' => $this->conditions,
-					'fields'     => $this->fields_value,
+					'conditions' => self::$conditions,
+					'fields'     => self::$fields_value,
+					'i18n'       => apply_filters( 'cx-interface-builder/config/i18n',  array(
+						'requiredError' => 'This field is required.',
+						'minError'      => 'Please enter a value greater than or equal to %s.',
+						'maxError'      => 'Please enter a value less than or equal to %s.',
+						'stepError'     => 'Please enter a value multiple of %s.',
+					) ),
 				)
 			);
 

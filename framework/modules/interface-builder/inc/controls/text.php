@@ -22,29 +22,38 @@ if ( ! class_exists( 'CX_Control_Text' ) ) {
 		 * @var array
 		 */
 		public $defaults_settings = array(
-			'type'        => 'text',
-			'id'          => 'cx-ui-input-id',
-			'name'        => 'cx-ui-input-name',
-			'value'       => '',
-			'placeholder' => '',
-			'label'       => '',
-			'class'       => '',
-			'required'    => false,
+			'type'         => 'text',
+			'input_type'   => '', // 'type' alias to avoid conflicts in Post Meta and Term Meta modules
+			'id'           => 'cx-ui-input-id',
+			'name'         => 'cx-ui-input-name',
+			'autocomplete' => 'on',
+			'value'        => '',
+			'placeholder'  => '',
+			'label'        => '',
+			'class'        => '',
+			'maxlength'    => false,
+			'required'     => false,
+			'extra_attr'   => array(),
 		);
 
 		/**
-		 * Get required attribute.
+		 * Get maxlength attribute
 		 *
-		 * @since 1.0.0
-		 * @return string
+		 * @return [type] [description]
 		 */
-		public function get_required() {
+		public function get_maxlength() {
 
-			if ( $this->settings['required'] ) {
-				return 'required="required"';
+			if ( empty( $this->settings['maxlength'] ) ) {
+				return;
 			}
 
-			return '';
+			$maxlength = absint( $this->settings['maxlength'] );
+
+			if ( ! $maxlength ) {
+				return;
+			}
+
+			return 'maxlength="' . $maxlength . '"';
 		}
 
 		/**
@@ -60,11 +69,23 @@ if ( ! class_exists( 'CX_Control_Text' ) ) {
 				)
 			);
 
+			if ( ! empty( $this->settings['input_type'] ) ) {
+				$type = esc_attr( $this->settings['input_type'] );
+			} else {
+				$type = esc_attr( $this->settings['type'] );
+			}
+
+			$autocomplete = ! empty( $this->settings['autocomplete'] ) ? $this->settings['autocomplete'] : 'on';
+			$autocomplete = sprintf( 'autocomplete="%s"', $autocomplete );
+
+			$extra_attr = ! empty( $this->settings['extra_attr'] ) ? ' ' . $this->get_attr_string( $this->settings['extra_attr'] ) : '';
+
 			$html .= '<div class="cx-ui-container ' . esc_attr( $class ) . '">';
-				if ( '' !== $this->settings['label'] ) {
-					$html .= '<label class="cx-label" for="' . esc_attr( $this->settings['id'] ) . '">' . esc_html( $this->settings['label'] ) . '</label> ';
-				}
-				$html .= '<input type="' . esc_attr( $this->settings['type'] ) . '" id="' . esc_attr( $this->settings['id'] ) . '" class="widefat cx-ui-text" name="' . esc_attr( $this->settings['name'] ) . '" value="' . esc_html( $this->settings['value'] ) . '" placeholder="' . esc_attr( $this->settings['placeholder'] ) . '" ' . $this->get_required() . '>';
+			if ( '' !== $this->settings['label'] ) {
+				$html .= '<label class="cx-label" for="' . esc_attr( $this->settings['id'] ) . '">' . wp_kses_post( $this->settings['label'] ) . '</label> ';
+			}
+
+			$html .= '<input type="' . $type . '" id="' . esc_attr( $this->settings['id'] ) . '" class="widefat cx-ui-text" name="' . esc_attr( $this->settings['name'] ) . '" value="' . esc_html( $this->settings['value'] ) . '" placeholder="' . esc_attr( $this->settings['placeholder'] ) . '" ' . $this->get_required() . ' ' . $this->get_maxlength() . ' ' . $autocomplete . $extra_attr . '>';
 			$html .= '</div>';
 			return $html;
 		}

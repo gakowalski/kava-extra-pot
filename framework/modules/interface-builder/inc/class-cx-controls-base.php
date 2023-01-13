@@ -23,6 +23,13 @@ if ( ! class_exists( 'CX_Controls_Base' ) ) {
 		public $base_url = null;
 
 		/**
+		 * Base path
+		 *
+		 * @var string
+		 */
+		public $base_path = null;
+
+		/**
 		 * Settings list
 		 *
 		 * @since 1.0.0
@@ -51,6 +58,30 @@ if ( ! class_exists( 'CX_Controls_Base' ) ) {
 
 			add_action( 'wp_enqueue_scripts', array( $this, 'register_depends' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'register_depends' ) );
+		}
+
+		/**
+		 * Returns control settings
+		 *
+		 * @return array
+		 */
+		public function get_settings() {
+			return $this->settings;
+		}
+
+		/**
+		 * Get required attribute.
+		 *
+		 * @since 1.0.0
+		 * @return string
+		 */
+		public function get_required() {
+
+			if ( $this->settings['required'] ) {
+				return 'required="required"';
+			}
+
+			return '';
 		}
 
 		/**
@@ -97,6 +128,15 @@ if ( ! class_exists( 'CX_Controls_Base' ) ) {
 		 */
 		public function set_base_url( $url = '' ) {
 			$this->base_url = $url;
+		}
+
+		/**
+		 * Set up base path for next usage
+		 *
+		 * @param string $url array
+		 */
+		public function set_base_path( $path = '' ) {
+			$this->base_path = $path;
 		}
 
 		/**
@@ -166,6 +206,16 @@ if ( ! class_exists( 'CX_Controls_Base' ) ) {
 
 			return implode( ' ', $result );
 
+		}
+
+		/**
+		 * Checks a value for being empty.
+		 *
+		 * @param  mixed $source
+		 * @return bool
+		 */
+		public function is_empty( $source ) {
+			return empty( $source ) && '0' !== $source;
 		}
 	}
 }

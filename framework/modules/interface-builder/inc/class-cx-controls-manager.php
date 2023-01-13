@@ -39,7 +39,6 @@ if ( ! class_exists( 'CX_Controls_Manager' ) ) {
 
 			require $this->base_path . 'inc/class-cx-controls-base.php';
 			$this->load_controls();
-
 		}
 
 		/**
@@ -48,6 +47,30 @@ if ( ! class_exists( 'CX_Controls_Manager' ) ) {
 		 * @return void
 		 */
 		public function load_controls() {
+			//$controls = [
+				//'button',
+				//'checkbox-raw',
+				//'checkbox',
+				//'colorpicker',
+				//'dimensions',
+				//'hidden',
+				//'iconpicker',
+				//'media',
+				//'posts',
+				//'radio',
+				//'repeater',
+				//'select',
+				//'slider',
+				//'switcher',
+				//'text',
+				//'textarea',
+				//'wysiwyg',
+				//'stepper',
+			//];
+
+			//foreach ( $controls as $control ) {
+			//	require $this->base_path . 'inc/controls/' . $control . '.php';
+			//}
 			foreach ( glob( $this->base_path . 'inc/controls/*.php' ) as $file ) {
 				require $file;
 			}
@@ -70,6 +93,7 @@ if ( ! class_exists( 'CX_Controls_Manager' ) ) {
 			$instance = new $classname( $args );
 
 			$instance->set_base_url( $this->base_url );
+			$instance->set_base_path( $this->base_path );
 
 			return $instance;
 		}
